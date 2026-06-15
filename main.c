@@ -1,48 +1,48 @@
-//#############################################################################
+// #############################################################################
 //
-// FILE:   empty_driverlib_main.c
+//  FILE:   empty_driverlib_main.c
 //
 //! \addtogroup driver_example_list
-//! <h1>Empty Project Example</h1> 
+//! <h1>Empty Project Example</h1>
 //!
 //! This example is an empty project setup for Driverlib development.
 //!
 //
-//#############################################################################
+// #############################################################################
 //
 //
 // $Copyright:
 // Copyright (C) 2025 Texas Instruments Incorporated - http://www.ti.com/
 //
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
 // are met:
-// 
-//   Redistributions of source code must retain the above copyright 
+//
+//   Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 //   Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the 
-//   documentation and/or other materials provided with the   
+//   notice, this list of conditions and the following disclaimer in the
+//   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 //   Neither the name of Texas Instruments Incorporated nor the names of
 //   its contributors may be used to endorse or promote products derived
 //   from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
 // LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 // DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // $
-//#############################################################################
+// #############################################################################
 
 //
 // Included Files
@@ -52,9 +52,31 @@
 #include "board.h"
 #include "c2000ware_libraries.h"
 
-
+// variable for the epwm
 volatile float target_phase_shift_pu = 0.25f;
 volatile uint16_t phase_ticks = 0;
+
+// variable for the ADC
+volatile uint16_t V_bus_raw = 0;
+volatile uint16_t V_bat_raw = 0;
+
+volatile uint16_t I_bus_raw = 0;
+volatile uint16_t I_bat_raw = 0;
+
+__interrupt void DAB_Fast_ISR(void)
+{
+    // read the voltage measurements from the ADC1
+    V_bat_raw = ADC_readResult(myADC1_BASE, ADC_SOC_NUMBER0);
+    V_bus_raw = ADC_readResult(myADC1_BASE, ADC_SOC_NUMBER1);
+
+    // read the current measurements from the ADC2
+    I_bus_raw = ADC_readPPBResult(myADC2_BASE, ADC_PPB_NUMBER1);
+    I_bat_raw = ADC_readPPBResult(myADC2_BASE, ADC_PPB_NUMBER2);
+
+    // clearing interuupt flags
+    ADC_clearInterruptStatus(myADC1_BASE, ADC_INT_NUMBER1);
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
+}
 
 void delay_loop(void)
 {
@@ -103,33 +125,37 @@ void main(void)
     EINT;
     ERTM;
 
-    while(1)
+    while (1)
     {
 
-        //clamp the target phase shift to be within -1.0 to 1.0 pu
-        if(target_phase_shift_pu > 1.0f) target_phase_shift_pu = 1.0f;
-        if(target_phase_shift_pu < -1.0f) target_phase_shift_pu = -1.0f;
+        // clamp the target phase shift to be within -1.0 to 1.0 pu
+        if (target_phase_shift_pu > 1.0f)
+            target_phase_shift_pu = 1.0f;
+        if (target_phase_shift_pu < -1.0f)
+            target_phase_shift_pu = -1.0f;
 
-
-        //calculate the number of timer ticks corresponding to the target phase shift
+        // calculate the number of timer ticks corresponding to the target phase shift
         float abs_phase = target_phase_shift_pu;
-        if(abs_phase < 0) abs_phase = -abs_phase;
-        phase_ticks = (uint16_t)(abs_phase * 240); 
-
-
+        if (abs_phase < 0)
+            abs_phase = -abs_phase;
+        phase_ticks = (uint16_t)(abs_phase * 240);
 
         // set the count direction based on the sign of the target phase shift
         EPWM_SyncCountMode count_dir = EPWM_COUNT_MODE_UP_AFTER_SYNC;
-        if (target_phase_shift_pu < 0.0f) count_dir = EPWM_COUNT_MODE_DOWN_AFTER_SYNC;
-
+        if (target_phase_shift_pu < 0.0f)
+            count_dir = EPWM_COUNT_MODE_DOWN_AFTER_SYNC;
 
         // update the EPWM sync settings to apply the new phase shift
         EPWM_setPhaseShift(myEPWM3_BASE, phase_ticks);
         EPWM_setCountModeAfterSync(myEPWM3_BASE, count_dir);
 
-        EPWM_setPhaseShift(myEPWM3_BASE, phase_ticks);
-        EPWM_setCountModeAfterSync(myEPWM3_BASE, count_dir);
+        EPWM_setPhaseShift(myEPWM4_BASE, phase_ticks);
+        EPWM_setCountModeAfterSync(myEPWM4_BASE, count_dir);
 
+        GPIO_togglePin(LED_DEBUG);
+
+        // F. Wait 100ms
+        delay_loop();
     }
 }
 
