@@ -21,10 +21,13 @@
 // Calibration constants for ADC conversion
 #define ADC_TO_PIN_VOLTS (3.3f / 4096.0f) // 12-bit ADC with 3.3V reference
 
-#define V_OFFSET 0.0f     // Voltage offset for calibration
-#define V_GAIN   444.44f
+// Voltage Calibration
+#define V_GAIN           445.017f     // 444.44 * 1.0013
+#define V_OFFSET         0.86f        // +0.86V static offset
 
-#define I_SENSITIVITY 0.0476f // 47.6 mV/A from real-world bench test
+// Current Calibrations
+#define I_SENSITIVITY    0.047316f    // 0.0476 / 1.006
+#define I_OFFSET         0.206f       // +0.206A static offset
 
 
 typedef struct

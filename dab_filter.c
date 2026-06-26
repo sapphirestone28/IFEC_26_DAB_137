@@ -42,7 +42,7 @@ void DAB_Filter_Init(void)
 }
 
 // -------------------------------------------------------------
-// MENTOR's FILTER (For Voltages only - takes raw ADC counts)
+// VOLTAGE FILTER
 // -------------------------------------------------------------
 float DAB_Run_Voltage_Filter(Voltage_Filter_t *filt, uint16_t new_adc_sample)
 {

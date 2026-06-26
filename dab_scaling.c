@@ -14,7 +14,7 @@ void DAB_Scale_Sensors(float smooth_V_bus_raw, float smooth_V_bat_raw, DAB_HAL_R
 {
     // -------------------------------------------------------------
     // 1. VOLTAGE SCALING
-    // Formula: V_actual = V_pin * 444.44
+    // Formula: V_actual = (V_pin * V_GAIN) + V_OFFSET
     // Note: We use the smoothed floats from Mentor's filter here!
     // -------------------------------------------------------------
     float V_bus_pin = smooth_V_bus_raw * ADC_TO_PIN_VOLTS;
@@ -25,14 +25,15 @@ void DAB_Scale_Sensors(float smooth_V_bus_raw, float smooth_V_bat_raw, DAB_HAL_R
 
     // -------------------------------------------------------------
     // 2. CURRENT SCALING
-    // Formula: I_actual = V_pin / sensitivity
-    // Note: We use the raw hardware struct here. PPB already subtracted the 1.635V offset.
+    // Formula: I_actual = (V_pin / I_SENSITIVITY) + I_OFFSET
+    // Note: We use the raw hardware struct here. PPB already subtracted
+    // the 1.635V offset. We add I_OFFSET to fix the 0.206A hardware drift.
     // -------------------------------------------------------------
     float I_bus_pin = (float)raw_sensors->I_bus_raw * ADC_TO_PIN_VOLTS;
-    measurements->I_bus_A = I_bus_pin / I_SENSITIVITY;
+    measurements->I_bus_A = (I_bus_pin / I_SENSITIVITY) + I_OFFSET;
 
     float I_bat_pin = (float)raw_sensors->I_bat_raw * ADC_TO_PIN_VOLTS;
-    measurements->I_bat_A = I_bat_pin / I_SENSITIVITY;
+    measurements->I_bat_A = (I_bat_pin / I_SENSITIVITY) + I_OFFSET;
 
     // Calculate Power
     measurements->P_bat_W = measurements->V_bat_V * measurements->I_bat_A;

@@ -98,7 +98,6 @@ cmpss1.lowCTRIP           = "CMPSS_TRIP_FILTER";
 cmpss1.samplePrescaleLow  = 1;
 cmpss1.sampleWindowLow    = 5;
 cmpss1.thresholdLow       = 4;
-cmpss1.dacValLow          = 1137;
 cmpss1.enableModule       = true;
 
 cmpss_lite1.cmpssLiteBase       = "CMPSSLITE3_BASE";
@@ -117,7 +116,6 @@ cmpss_lite1.sampleWindowHigh    = 5;
 cmpss_lite1.thresholdHigh       = 4;
 cmpss_lite1.asysCMPLPMXSELValue = "3";
 cmpss_lite1.$name               = "myCMPSS3";
-cmpss_lite1.dacValLow           = 1137;
 cmpss_lite1.enableModule        = true;
 
 analog1.$name                                 = "myANALOGPinMux0";
@@ -268,12 +266,10 @@ epwm5.epwm.$assign                                               = "EPWM6";
 epwm5.epwm.epwm_aPin.$assign                                     = "GPIO10";
 epwm5.epwm.epwm_bPin.$assign                                     = "GPIO11";
 
-epwmxbar1.$name     = "myEPWMXBAR0";
-epwmxbar1.muxesUsed = ["XBAR_MUX00","XBAR_MUX01","XBAR_MUX04","XBAR_MUX05"];
+epwmxbar1.$name = "myEPWMXBAR0";
 
 epwmxbar2.$name     = "myEPWMXBAR1";
 epwmxbar2.tripInput = "XBAR_TRIP5";
-epwmxbar2.muxesUsed = ["XBAR_MUX00","XBAR_MUX02"];
 
 gpio1.$name             = "LED_DEBUG";
 gpio1.direction         = "GPIO_DIR_MODE_OUT";
